@@ -1,0 +1,34 @@
+name: release
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+
+      - name: Docker Image
+        run: |
+          docker pull openjdk:11
+      - name: Docker Build
+        run: |
+          docker run -i --name build -v $(pwd)/complete:/home -w /home openjdk:11 /bin/bash build.sh
+
+      - name: Test output
+        shell: pwsh
+        run: |
+          Test-Path complete/target/spring-boot-complete-0.0.1-SNAPSHOT.jar | Should -Be $true
+
+      - name: Public release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            complete/target/spring-boot-complete-0.0.1-SNAPSHOT.jar
